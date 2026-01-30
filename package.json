@@ -1,6 +1,8 @@
 {
   "name": "tars",
-  "module": "index.ts",
+  "version": "0.1.0",
+  "description": "AI-powered CLI coding assistant",
+  "module": "src/index.ts",
   "type": "module",
   "private": true,
   "devDependencies": {
