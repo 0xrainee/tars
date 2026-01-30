@@ -95,3 +95,8 @@ function formatTree(
 
   return result;
 }
+
+console.log(getFolderStructure({
+  gitIgnoreChecker: () => false,
+  rootDir: process.cwd()
+}));

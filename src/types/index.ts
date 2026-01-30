@@ -1,6 +1,6 @@
 export interface ToolResult {
   LLMresult: string,
-  DsiplayResult: string;
+  DisplayResult: string;
 }
 
 export interface ReturnedMessageType {
