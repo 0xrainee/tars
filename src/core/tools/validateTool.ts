@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { readFile } from './readFileTool';
 import { editFile } from './editTool';
 import { createNewFile } from './newFileTool';
+import { globFiles } from './globTool';
+import { grepTool } from './grepTool';
 
 export interface LLMConfig {
   model: string;
@@ -13,12 +15,15 @@ export interface LLMConfig {
 export interface configType {
   LLMConfig: LLMConfig;
   rootDir: string;
+  gitIgnoreChecker: (path: string) => boolean;
 }
 
 export type ToolCall = 
   | z.infer<typeof ReadFileSchema>
   | z.infer<typeof EditFileSchema>
-  | z.infer<typeof NewFileSchema>;
+  | z.infer<typeof NewFileSchema>
+  | z.infer<typeof GrepSchema>
+  | z.infer<typeof GlobSchema>;
 
 export interface ValidationResult {
   success: boolean;
@@ -34,7 +39,7 @@ export const ReadFileSchema = z.object({
     startLine: z.number().int().min(1, "Line numbers start at 1").optional(),
     endLine: z.number().int().min(1, "Line numbers start at 1").optional(),
   }),
-})
+});
 
 export const EditFileSchema = z.object({
   tool: z.literal("edit_file"),
@@ -51,6 +56,22 @@ export const NewFileSchema = z.object({
   toolOptions: z.object({
     filePath: z.string().min(1, "File path cannot be empty"),
     content: z.string(),
+  }),
+});
+
+export const GrepSchema = z.object({
+  tool: z.literal("grep"),
+  toolOptions: z.object({
+    pattern: z.string().min(1, "Pattern cannot be empty"),
+    path: z.string().optional(),
+    include: z.string().optional(),
+  }),
+});
+
+export const GlobSchema = z.object({
+  tool: z.literal("glob"),
+  toolOptions: z.object({
+    pattern: z.string().min(1, "Pattern cannot be empty"),
   }),
 });
 
@@ -87,9 +108,15 @@ export async function validateAndRunTool(
       case "new_file": 
         return await handleNewFile(data);
 
+      case "grep":
+        return await handleGrep(data, config);
+
+      case "glob":
+        return await handleGlob(data, config);
+
       default: 
         return createErrorResult(
-          `Unknown tool: "${data.tool}". Supported tools: read_file, edit_file, new_file`
+          `Unknown tool: "${data.tool}". Supported tools: read_file, edit_file, new_file, grep, glob`
         );
     }
   } catch (error) {
@@ -160,6 +187,42 @@ async function handleNewFile(data: any): Promise<ValidationResult> {
     filePath: parsed.data.toolOptions.filePath,
     content: parsed.data.toolOptions.content,
   });
+  
+  return createSuccessResult(parsed.data, result);
+}
+
+async function handleGrep(data: any, config: configType): Promise<ValidationResult> {
+  const parsed = GrepSchema.safeParse(data);
+  
+  if (!parsed.success) {
+    return createErrorResult(
+      `Invalid grep options: ${formatZodError(parsed.error)}`
+    );
+  }
+
+  const result = await grepTool({
+    pattern: parsed.data.toolOptions.pattern,
+    path: parsed.data.toolOptions.path,
+    include: parsed.data.toolOptions.include,
+  });
+  
+  return createSuccessResult(parsed.data, result);
+}
+
+async function handleGlob(data: any, config: configType): Promise<ValidationResult> {
+  const parsed = GlobSchema.safeParse(data);
+  
+  if (!parsed.success) {
+    return createErrorResult(
+      `Invalid glob options: ${formatZodError(parsed.error)}`
+    );
+  }
+
+  const result = await globFiles(
+    { pattern: parsed.data.toolOptions.pattern },
+    config.rootDir,
+    config.gitIgnoreChecker
+  );
   
   return createSuccessResult(parsed.data, result);
 }
