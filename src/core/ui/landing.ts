@@ -29,7 +29,13 @@ export async function showLanding() {
     maxLength: '0',
   });
 
-  console.log(chalk.gray.dim('Tactical Automated Response System\n'));
+  const subtitle = ' Tactical Automated Response System ';
+  const boxWidth = subtitle.length + 2;
+  const horizontalBorder = '─'.repeat(boxWidth);
+  
+  console.log(chalk.gray.dim(`┌${horizontalBorder}┐`));
+  console.log(chalk.gray.dim(`│ ${subtitle} │`));
+  console.log(chalk.gray.dim(`└${horizontalBorder}┘\n`));
   
   console.log(chalk.white.bold('Capabilities:\n'));
   CAPABILITIES.forEach(capability => {
