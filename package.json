@@ -2,6 +2,14 @@
   "name": "tars",
   "version": "0.1.0",
   "description": "AI-powered CLI coding assistant",
+  "bin": {
+    "tars": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "start": "bun dist/index.js"
+  },
   "module": "src/index.ts",
   "type": "module",
   "private": true,

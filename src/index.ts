@@ -2,17 +2,18 @@
 
 import { program } from "commander";
 import dotenv from "dotenv";
+import { runCli } from "./core/ui";
 
 dotenv.config();
 
 async function main() {
   program
-    .name("TARS")
+    .name("tars")
     .description("AI-powered CLI coding assistant")
     .version("0.1.0");
 
   program.action(async () => {
-    console.log("Come on TARS!");
+    await runCli();
   });
 
   program.parse();

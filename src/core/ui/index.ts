@@ -1,4 +1,4 @@
-import { text } from '@clack/prompts';
+import { text, confirm } from '@clack/prompts';
 import chalk from 'chalk';
 import { Processor } from '../processor';
 import { showLanding } from './landing';
@@ -9,12 +9,12 @@ export async function runCli() {
   await showLanding();
   
   const processor = new Processor(rootDir);
-
+  
   while (true) {
     try {
       const query = await text({
-        message: 'Enter your query:',
-        placeholder: 'e.g., "Create a users table with email and password fields"',
+        message: 'What do you need?',
+        placeholder: 'e.g., "Add error handling to readFile" or "Find all TODO comments"',
         validate: (value) => {
           if (!value || value.trim().length === 0) {
             return 'Please enter a query';
@@ -23,8 +23,16 @@ export async function runCli() {
       });
 
       if (typeof query === 'symbol') {
-        console.log(chalk.yellow('\nEjecting...'));
-        process.exit(0);
+        const shouldExit = await confirm({
+          message: 'Exit?',
+          initialValue: false,
+        });
+
+        if (shouldExit === true) {
+          console.log(chalk.yellow('\nExiting...\n'));
+          process.exit(0);
+        }
+        continue;
       }
 
       if (typeof query === 'string' && query.trim()) {
@@ -33,8 +41,24 @@ export async function runCli() {
 
       console.log();
     } catch (error) {
-      console.log(chalk.red('Error:'), error);
-      process.exit(0);
+      if (error instanceof Error && error.message.includes('canceled')) {
+        console.log(chalk.yellow('\nCanceled\n'));
+        process.exit(0);
+      }
+      
+      console.log(chalk.red('\nError:'), error);
+      
+      const shouldContinue = await confirm({
+        message: 'Continue?',
+        initialValue: true,
+      });
+
+      if (!shouldContinue) {
+        console.log(chalk.yellow('\nEjecting...\n'));
+        process.exit(0);
+      }
+      
+      console.log();
     }
   }
 }
