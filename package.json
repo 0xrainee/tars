@@ -7,8 +7,9 @@
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
-    "start": "bun dist/index.js"
+    "build": "bun build src/index.ts --outdir dist --target bun --minify",
+    "start": "bun dist/index.js",
+    "lint": "tsc --noEmit"
   },
   "module": "src/index.ts",
   "type": "module",

@@ -14,7 +14,7 @@
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/0xrainee/tars
 cd tars
 
 # Install dependencies
