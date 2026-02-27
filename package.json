@@ -1,5 +1,5 @@
 {
-  "name": "tars",
+  "name": "tars-cli",
   "version": "0.1.1",
   "description": "AI-powered CLI coding assistant",
   "bin": {
