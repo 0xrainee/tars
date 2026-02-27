@@ -3,21 +3,27 @@
   "version": "0.1.0",
   "description": "AI-powered CLI coding assistant",
   "bin": {
-    "tars": "./src/index.ts"
+    "tars": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun --minify",
-    "start": "bun dist/index.js",
+    "build": "bun build src/index.ts --outdir dist --target node --minify",
+    "postbuild": "echo '#!/usr/bin/env node' | cat - dist/index.js > tmp && mv tmp dist/index.js && chmod +x dist/index.js",
+    "prepublishOnly": "bun run build",
+    "start": "node dist/index.js",
     "lint": "tsc --noEmit"
   },
-  "module": "src/index.ts",
   "type": "module",
-  "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
+    "@types/bun": "latest",
     "typescript": "^5"
   },
   "dependencies": {
