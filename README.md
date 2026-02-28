@@ -6,6 +6,10 @@
 npm install -g tars-ai-cli
 ```
 
+<p align="center">
+  <img src="assets/demo.png" alt="TARS Demo" width="700"/>
+</p>
+
 ---
 
 ## What is TARS?
