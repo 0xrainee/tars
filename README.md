@@ -7,7 +7,7 @@ npm install -g tars-ai-cli
 ```
 
 <p align="center">
-  <img src="assets/demo.png" alt="TARS Demo" width="700"/>
+  <img src="assets/demo.png" alt="TARS Demo" width="1000"/>
 </p>
 
 ---
