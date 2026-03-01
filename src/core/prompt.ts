@@ -192,4 +192,30 @@ Rules:
 4. Each tool call must advance the task
 5. No repeated operations
 
-Tools: read_file, edit_file, new_file, grep, glob, shell_command`;
+Tools: read_file, edit_file, new_file, grep, glob, shell_command
+
+
+INTERNAL TOOL — use this when starting any multi - step task:
+update_task_list: toolOptions = { "goal": "what you're doing", "items": [{ "id": "1", "title": "step name", "status": "todo" }] }
+Update item status to "in-progress" when starting, "done" when finished.`;
+
+export const MODE_PROMPTS: Record<string, string> = {
+  planning: `[PLANNING MODE] You are in PLANNING mode.
+- Use read_file, grep, glob to understand the codebase
+- Do NOT edit or create files or run shell commands
+- Respond with a clear plan as your final "text" message
+- Use update_task_list tool to show the planned steps
+- Wait for the user to say "go ahead" before executing anything`,
+
+  agent: `[AGENT MODE] You are in AGENT mode.
+- Execute tasks fully and autonomously
+- Use all available tools
+- Complete the entire task end-to-end including verification`,
+
+  ask: `[ASK MODE] You are in ASK mode.
+- You are READ-ONLY. Never edit or create files.
+- Never run shell_command
+- Only use: read_file, grep, glob
+- Answer questions and explain code clearly
+- If user asks for changes, say: "Switch to agent mode with :mode agent"`,
+};
