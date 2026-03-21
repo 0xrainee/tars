@@ -12,7 +12,7 @@ export type AgentMode = "planning" | "agent" | "ask";
 export interface TaskItem {
   id: string;
   title: string;
-  status: "todo" | "in-progress" | "done"
+  status: "todo" | "in-progress" | "done" | "failed";
 }
 
 export interface TaskList {
