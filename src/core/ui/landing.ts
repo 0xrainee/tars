@@ -1,47 +1,33 @@
-import cfonts from "cfonts";
-import chalk from "chalk";
+import cfonts from 'cfonts';
+import chalk from 'chalk';
 
-const CAPABILITIES = [
-  "Read and analyze files in your project",
-  "Edit existing files with surgical precision",
-  "Create new files and components",
-  "Search code using grep and glob patterns",
-  "Execute shell commands",
-  "Understand your codebase structure",
-];
-
-export async function showLanding() {
-  process.on("SIGINT", () => {
-    console.log(chalk.yellow("\n\nGoodbye!\n"));
+export async function showLanding(version: string, model: string) {
+  process.on('SIGINT', () => {
+    console.log(chalk.yellow('\n\nGoodbye!\n'));
     process.exit(0);
   });
 
   console.clear();
 
-  cfonts.say("TARS", {
-    font: "block",
-    align: "left",
-    colors: ["cyan"],
-    background: "transparent",
+  cfonts.say('TARS', {
+    font: 'block',
+    align: 'left',
+    colors: ['cyan'],
+    background: 'transparent',
     letterSpacing: 1,
     lineHeight: 1,
-    space: true,
-    maxLength: "0",
+    space: false,
+    maxLength: '0',
   });
 
-  const subtitle = " Tactical Automated Response System ";
-  const boxWidth = subtitle.length + 2;
-  const horizontalBorder = "─".repeat(boxWidth);
+  // version + model + cwd on one line
+  const cwd = process.cwd().replace(process.env.HOME || '', '~');
+  console.log(chalk.gray(`  v${version} · ${model} · ${cwd}\n`));
 
-  console.log(chalk.gray.dim(`┌${horizontalBorder}┐`));
-  console.log(chalk.gray.dim(`│ ${subtitle} │`));
-  console.log(chalk.gray.dim(`└${horizontalBorder}┘\n`));
+  // capability pills
+  const pills = ['read files', 'edit files', 'run commands', 'search code', 'create files'];
+  const pillStr = pills.map(p => chalk.bgHex('#0d2e1a').hex('#27c93f')(` ${p} `)).join('  ');
+  console.log('  ' + pillStr + '\n');
 
-  console.log(chalk.white.bold("Capabilities:\n"));
-  CAPABILITIES.forEach((capability) => {
-    console.log(chalk.gray("  •"), chalk.white(capability));
-  });
-
-  console.log();
-  console.log(chalk.gray.dim("Press Ctrl+C to exit\n"));
+  console.log(chalk.gray('  ─────────────────────────────────────\n'));
 }

@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import chalk, { type ChalkInstance } from "chalk";
 import * as fs from "fs";
 import * as path from "path";
 import { Processor } from "../processor";
@@ -10,32 +10,27 @@ import type { AgentMode, TaskList } from "../../types";
 export async function runCli(config?: TarsConfig) {
   const rootDir = process.cwd();
 
-  await showLanding();
+  const pkg = (await import("../../../package.json")) as { version: string };
+  const model = config?.llm?.model ?? "gemini-2.5-flash";
+  await showLanding(pkg.version, model);
 
   const processor = new Processor(rootDir, config);
-
   const session = createPromptSession();
 
-  console.log(chalk.white.bold("\nChoose a starting mode:"));
-  console.log(
-    chalk.green("  agent") + chalk.gray("    — execute tasks (default)"),
-  );
-  console.log(
-    chalk.yellow("  planning") + chalk.gray(" — plan without touching files"),
-  );
-  console.log(chalk.blue("  ask") + chalk.gray("      — read-only Q&A"));
+  console.log(chalk.bold("  select mode\n"));
+  console.log(`  ${chalk.cyan("agent")}    ${chalk.gray("execute tasks autonomously")}  ${chalk.cyan("[default]")}`);
+  console.log(`  ${chalk.yellow("planning")} ${chalk.gray("plan without touching files")}`);
+  console.log(`  ${chalk.blue("ask")}      ${chalk.gray("read-only Q&A")}\n`);
 
-  process.stdout.write(chalk.gray("\nMode (press Enter for agent): "));
+  process.stdout.write(chalk.gray("  mode (Enter for agent): "));
   const modeAnswer = await session.ask();
 
   if (modeAnswer && ["planning", "agent", "ask"].includes(modeAnswer)) {
     processor.setMode(modeAnswer as AgentMode);
-    console.log(
-      chalk.green(`\n✓ Started in ${modeAnswer.toUpperCase()} mode\n`),
-    );
   } else {
-    console.log(chalk.green("\n✓ Started in AGENT mode\n"));
+    processor.setMode("agent");
   }
+  console.log();
 
   while (true) {
     try {
@@ -44,7 +39,18 @@ export async function runCli(config?: TarsConfig) {
 
       renderStatusBar(processor);
 
-      process.stdout.write(chalk.cyan("❯ "));
+      const modeColors: Record<AgentMode, ChalkInstance> = {
+        agent: chalk.cyan,
+        planning: chalk.yellow,
+        ask: chalk.blue,
+      };
+      const currentMode = processor.getMode();
+      process.stdout.write(
+        chalk.gray("❯ ") +
+        modeColors[currentMode](`[${currentMode}]`) +
+        chalk.gray(" ")
+      );
+
       const query = await session.ask();
 
       if (query === null) {
@@ -59,8 +65,9 @@ export async function runCli(config?: TarsConfig) {
       }
 
       console.log();
-      await processor.processQuery(query);
+      const result = await processor.processQuery(query);
       console.log();
+
     } catch (error) {
       if (error instanceof Error && error.message.includes("canceled")) {
         console.log(chalk.yellow("\nGoodbye!\n"));
@@ -104,7 +111,7 @@ function renderStatusBar(processor: Processor) {
   const status = processor.getStatus();
   const mode = processor.getMode();
 
-  const modeColors: Record<AgentMode, (s: string) => string> = {
+  const modeColors: Record<AgentMode, ChalkInstance> = {
     agent: chalk.green,
     planning: chalk.yellow,
     ask: chalk.blue,
@@ -112,9 +119,7 @@ function renderStatusBar(processor: Processor) {
 
   const modeText = modeColors[mode](`[${mode.toUpperCase()}]`);
   const msgs = chalk.gray(`msgs:${status.messageCount}`);
-  const tokens = chalk.gray(
-    `~${Math.round(status.totalTokens / 100) / 10}k tokens`,
-  );
+  const tokens = chalk.gray(`~${Math.round(status.totalTokens / 100) / 10}k tokens`);
   const hint = chalk.gray("(:help for commands)");
 
   console.log(`${modeText} ${msgs}  ${tokens}  ${hint}`);
@@ -127,25 +132,13 @@ function handleCommand(cmd: string, processor: Processor) {
   switch (command) {
     case ":help":
       console.log(chalk.bold("\n  Available commands:\n"));
-      console.log(
-        `  ${chalk.cyan(":mode")}                    — show current mode`,
-      );
-      console.log(
-        `  ${chalk.cyan(":mode agent")}             — switch to agent mode`,
-      );
-      console.log(
-        `  ${chalk.cyan(":mode planning")}          — switch to planning mode`,
-      );
-      console.log(
-        `  ${chalk.cyan(":mode ask")}               — switch to ask (read-only) mode`,
-      );
-      console.log(
-        `  ${chalk.cyan(":pin <file>")}             — pin file into every prompt`,
-      );
+      console.log(`  ${chalk.cyan(":mode")}                    — show current mode`);
+      console.log(`  ${chalk.cyan(":mode agent")}             — switch to agent mode`);
+      console.log(`  ${chalk.cyan(":mode planning")}          — switch to planning mode`);
+      console.log(`  ${chalk.cyan(":mode ask")}               — switch to ask (read-only) mode`);
+      console.log(`  ${chalk.cyan(":pin <file>")}             — pin file into every prompt`);
       console.log(`  ${chalk.cyan(":unpin <file>")}           — unpin file`);
-      console.log(
-        `  ${chalk.cyan(":clear")}                   — clear the screen`,
-      );
+      console.log(`  ${chalk.cyan(":clear")}                   — clear the screen`);
       console.log(`  ${chalk.cyan(":exit")}                    — quit TARS\n`);
       break;
 
@@ -154,20 +147,12 @@ function handleCommand(cmd: string, processor: Processor) {
         const newMode = parts[1] as AgentMode;
         if (["agent", "planning", "ask"].includes(newMode)) {
           processor.setMode(newMode);
-          console.log(
-            chalk.green(`\n✓ Switched to ${newMode.toUpperCase()} mode\n`),
-          );
+          console.log(chalk.green(`\n✓ Switched to ${newMode.toUpperCase()} mode\n`));
         } else {
-          console.log(
-            chalk.red(
-              `\n✗ Unknown mode: "${parts[1]}". Use: agent, planning, ask\n`,
-            ),
-          );
+          console.log(chalk.red(`\n✗ Unknown mode: "${parts[1]}". Use: agent, planning, ask\n`));
         }
       } else {
-        console.log(
-          chalk.cyan(`\nCurrent mode: ${processor.getMode().toUpperCase()}\n`),
-        );
+        console.log(chalk.cyan(`\nCurrent mode: ${processor.getMode().toUpperCase()}\n`));
       }
       break;
 
@@ -196,7 +181,7 @@ function handleCommand(cmd: string, processor: Processor) {
         } else {
           console.log(chalk.cyan("\nPinned files:"));
           pinned.forEach((f) =>
-            console.log(`  - ${path.relative(process.cwd(), f)}`),
+            console.log(`  - ${path.relative(process.cwd(), f)}`)
           );
           console.log();
         }
@@ -218,10 +203,6 @@ function handleCommand(cmd: string, processor: Processor) {
       process.exit(0);
 
     default:
-      console.log(
-        chalk.yellow(
-          `\nUnknown command: ${cmd}. Type :help to see commands.\n`,
-        ),
-      );
+      console.log(chalk.yellow(`\nUnknown command: ${cmd}. Type :help to see commands.\n`));
   }
 }
