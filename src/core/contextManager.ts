@@ -1,4 +1,6 @@
 import { BASE_PROMPT, EXAMPLES, TOOL_SELECTION_PROMPT, MODE_PROMPTS } from './prompt';
+import * as fs from "fs";
+import * as path from "path";
 import { toolRegistry } from './tools/toolRegistry';
 import { getFolderStructure } from './utils';
 import type { AgentMode } from '../types';
@@ -34,7 +36,9 @@ export class ContextManager {
   private projectState: ProjectState;
   private mode: AgentMode = 'agent'; // default mode
   private summary: string | null = null;
+  private pinnedFiles: Set<string> = new Set();
   private maxTokens = 20000;
+
 
 constructor(cwd: string, gitIgnoreChecker: (path: string) => boolean | null, config?: TarsConfig) {
   this.gitIgnoreChecker = gitIgnoreChecker;
@@ -75,6 +79,18 @@ constructor(cwd: string, gitIgnoreChecker: (path: string) => boolean | null, con
       this.buildToolInfoSection(),  // available tools
       this.buildConversationSection(), // chat history
     ].filter(Boolean).join('\n\n');
+  }
+
+  pinFile(filePath: string) {
+    this.pinnedFiles.add(filePath);
+  }
+
+  unpinFile(filePath: string) {
+    this.pinnedFiles.delete(filePath);
+  }
+
+  getPinnedFiles(): string[] {
+    return Array.from(this.pinnedFiles);
   }
 
   setMode(mode: AgentMode) {
@@ -118,9 +134,28 @@ constructor(cwd: string, gitIgnoreChecker: (path: string) => boolean | null, con
     return `${this.systemPrompt}\n\n${MODE_PROMPTS[this.mode]}`;
   }
 
-  private buildProjectStateSection(): string {
-    return [`CWD: ${this.projectState.cwd}`, `File Tree: ${this.projectState.fileTree}`].join('\n');
+private buildProjectStateSection(): string {
+  const parts = [];
+  parts.push(`CWD: ${this.projectState.cwd}`);
+  parts.push(`File Tree: ${this.projectState.fileTree}`);
+
+  if (this.pinnedFiles.size > 0) {
+    parts.push('\n--- Pinned Files ---');
+    for (const filePath of this.pinnedFiles) {
+      try {
+        if (fs.existsSync(filePath)) {
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const rel = path.relative(this.projectState.rootDir, filePath);
+          parts.push(`File: ${rel}\n\`\`\`\n${content}\n\`\`\``);
+        }
+      } catch {
+        parts.push(`File: ${filePath} (error reading)`);
+      }
+    }
   }
+
+  return parts.join('\n');
+}
 
   // Sliding window: only keep recent messages that fit in token budget
   private buildConversationSection(): string {

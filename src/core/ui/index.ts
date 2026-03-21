@@ -1,4 +1,6 @@
 import chalk from "chalk";
+import * as fs from "fs";
+import * as path from "path";
 import { Processor } from "../processor";
 import { showLanding } from "./landing";
 import { createPromptSession } from "./prompt";
@@ -14,7 +16,6 @@ export async function runCli(config?: TarsConfig) {
 
   const session = createPromptSession();
 
-  // mode selection
   console.log(chalk.white.bold("\nChoose a starting mode:"));
   console.log(chalk.green("  agent") + chalk.gray("    — execute tasks (default)"));
   console.log(chalk.yellow("  planning") + chalk.gray(" — plan without touching files"));
@@ -123,6 +124,8 @@ function handleCommand(cmd: string, processor: Processor) {
       console.log(`  ${chalk.cyan(":mode agent")}             — switch to agent mode`);
       console.log(`  ${chalk.cyan(":mode planning")}          — switch to planning mode`);
       console.log(`  ${chalk.cyan(":mode ask")}               — switch to ask (read-only) mode`);
+      console.log(`  ${chalk.cyan(":pin <file>")}             — pin file into every prompt`);
+      console.log(`  ${chalk.cyan(":unpin <file>")}           — unpin file`);
       console.log(`  ${chalk.cyan(":clear")}                   — clear the screen`);
       console.log(`  ${chalk.cyan(":exit")}                    — quit TARS\n`);
       break;
@@ -140,6 +143,41 @@ function handleCommand(cmd: string, processor: Processor) {
         console.log(chalk.cyan(`\nCurrent mode: ${processor.getMode().toUpperCase()}\n`));
       }
       break;
+
+    case ":pin": {
+      const filePath = parts[1];
+      if (!filePath) {
+        console.log(chalk.yellow("\nUsage: :pin <relative-file-path>\n"));
+        break;
+      }
+      const abs = path.resolve(process.cwd(), filePath);
+      if (!fs.existsSync(abs)) {
+        console.log(chalk.red(`\nFile not found: ${filePath}\n`));
+        break;
+      }
+      processor.pinFile(abs);
+      console.log(chalk.green(`\n✓ Pinned: ${filePath}\n`));
+      break;
+    }
+
+    case ":unpin": {
+      const filePath = parts[1];
+      if (!filePath) {
+        const pinned = processor.getPinnedFiles();
+        if (pinned.length === 0) {
+          console.log(chalk.yellow("\nNo files pinned.\n"));
+        } else {
+          console.log(chalk.cyan("\nPinned files:"));
+          pinned.forEach(f => console.log(`  - ${path.relative(process.cwd(), f)}`));
+          console.log();
+        }
+        break;
+      }
+      const abs = path.resolve(process.cwd(), filePath);
+      processor.unpinFile(abs);
+      console.log(chalk.green(`\n✓ Unpinned: ${filePath}\n`));
+      break;
+    }
 
     case ":clear":
       console.clear();

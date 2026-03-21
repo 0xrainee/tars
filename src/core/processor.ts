@@ -66,6 +66,18 @@ constructor(rootDir: string, config?: TarsConfig) {
     );
   }
 
+  pinFile(filePath: string) {
+    this.contextManager.pinFile(filePath);
+  }
+
+  unpinFile(filePath: string) {
+    this.contextManager.unpinFile(filePath);
+  }
+
+  getPinnedFiles(): string[] {
+    return this.contextManager.getPinnedFiles();
+  }
+
   async processQuery(query: string) {
     this.contextManager.addUserMessage(query);
 
@@ -164,4 +176,5 @@ constructor(rootDir: string, config?: TarsConfig) {
     const parsed = JSON.parse(clean);
     return typeof parsed === 'string' ? JSON.parse(parsed) : parsed;
   }
+
 }
