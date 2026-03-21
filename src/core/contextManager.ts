@@ -2,6 +2,7 @@ import { BASE_PROMPT, EXAMPLES, TOOL_SELECTION_PROMPT, MODE_PROMPTS } from './pr
 import { toolRegistry } from './tools/toolRegistry';
 import { getFolderStructure } from './utils';
 import type { AgentMode } from '../types';
+import type { TarsConfig } from './config';
 
 export interface Message {
   role: 'user' | 'model';
@@ -35,14 +36,17 @@ export class ContextManager {
   private summary: string | null = null;
   private maxTokens = 20000;
 
-  constructor(cwd: string, gitIgnoreChecker: (path: string) => boolean | null) {
-    this.gitIgnoreChecker = gitIgnoreChecker;
-    this.projectState = {
-      rootDir: cwd,
-      cwd,
-      fileTree: this.buildFileTree(cwd),
-    };
+constructor(cwd: string, gitIgnoreChecker: (path: string) => boolean | null, config?: TarsConfig) {
+  this.gitIgnoreChecker = gitIgnoreChecker;
+  this.projectState = {
+    rootDir: cwd,
+    cwd,
+    fileTree: this.buildFileTree(cwd),
+  };
+  if (config?.features?.maxContextTokens) {
+    this.maxTokens = config.features.maxContextTokens;
   }
+}
 
   // Called when AI uses a tool
   addResponse(response: string, toolCall: ToolCall) {

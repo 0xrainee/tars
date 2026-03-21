@@ -4,6 +4,7 @@ import { ContextManager } from './contextManager';
 import { validateAndRunTool } from './tools/validateTool';
 import { createGitIgnoreChecker } from './tools/gitIgnoreFileTool';
 import type { AgentMode, TaskList } from '../types';
+import { loadConfig, type TarsConfig } from './config';
 
 export interface ProcessorConfig {
   rootDir: string;
@@ -22,13 +23,13 @@ export class Processor {
   private taskList: TaskList | null = null;
   private messageQueue: string[] = [];
 
-  constructor(rootDir: string) {
-    const gitIgnoreChecker = createGitIgnoreChecker(rootDir);
-
-    this.config = { rootDir, gitIgnoreChecker };
-    this.llm = new LLM('gemini-2.5-flash');
-    this.contextManager = new ContextManager(rootDir, gitIgnoreChecker);
-  }
+constructor(rootDir: string, config?: TarsConfig) {
+  const cfg = config ?? loadConfig(rootDir);
+  const gitIgnoreChecker = createGitIgnoreChecker(rootDir);
+  this.config = { rootDir, gitIgnoreChecker };
+  this.llm = new LLM(cfg.llm?.model ?? 'gemini-2.5-flash');
+  this.contextManager = new ContextManager(rootDir, gitIgnoreChecker, cfg);
+}
 
   setMode(mode: AgentMode) {
     this.mode = mode;

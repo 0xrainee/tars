@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-
 import { program } from "commander";
 import dotenv from "dotenv";
 import { runCli } from "./core/ui";
+import { loadConfig } from "./core/config";
 
 dotenv.config();
 
@@ -13,7 +13,9 @@ async function main() {
     .version("0.1.0");
 
   program.action(async () => {
-    await runCli();
+    const rootDir = process.cwd();
+    const config = loadConfig(rootDir);
+    await runCli(config);
   });
 
   program.parse();

@@ -3,13 +3,13 @@ import * as readline from 'readline';
 import { Processor } from '../processor';
 import { showLanding } from './landing';
 import type { AgentMode, TaskList } from '../../types';
+import type { TarsConfig } from '../config';
 
-export async function runCli() {
+export async function runCli(config?: TarsConfig) {  
   const rootDir = process.cwd();
+  const processor = new Processor(rootDir, config); 
 
   await showLanding();
-
-  const processor = new Processor(rootDir);
 
   // Set up terminal input
   const rl = readline.createInterface({
