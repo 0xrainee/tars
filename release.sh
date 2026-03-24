@@ -17,17 +17,6 @@ fi
 echo "Pulling latest changes..."
 git pull origin main
 
-echo "Installing dependencies..."
-bun install --frozen-lockfile
-
-echo "Building project..."
-bun run build
-
-if [ ! -f "dist/index.js" ]; then
-    echo "Error: Build failed — dist/index.js not found"
-    exit 1
-fi
-
 echo "What type of release is this?"
 echo "1) patch (bug fixes)"
 echo "2) minor (new features)"
