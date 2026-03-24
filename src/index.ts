@@ -3,16 +3,15 @@ import { program } from "commander";
 import dotenv from "dotenv";
 import { runCli } from "./core/ui";
 import { loadConfig } from "./core/config";
+import pkg from "../package.json";
 
 dotenv.config();
-
-const { version } = await import("../package.json");
 
 async function main() {
   program
     .name("tars")
     .description("AI-powered CLI coding assistant")
-    .version(version);
+    .version(pkg.version);
 
   program.action(async () => {
     const rootDir = process.cwd();
